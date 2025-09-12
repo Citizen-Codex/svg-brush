@@ -1,18 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { BrushDefinition } from '$lib/brush/BrushGeometry.js';
-	import {
-		BackboneDeformation,
-		type DeformationOptions
-	} from '$lib/deformation/BackboneDeformation.js';
-	import { PathMath, type Point } from '$lib/math/PathMath.js';
+	import type { BrushDefinition } from '$lib/BrushGeometry.js';
+	import { BackboneDeformation } from '$lib/BackboneDeformation.js';
+	import { PathMath, type Point } from '$lib/PathMath.js';
 
 	// Props
 	interface Props {
 		width?: number;
 		height?: number;
 		brush?: BrushDefinition;
-		deformationOptions?: Partial<DeformationOptions>;
 		backgroundColor?: string;
 		showGrid?: boolean;
 	}
@@ -21,7 +17,6 @@
 		width = 800,
 		height = 600,
 		brush,
-		deformationOptions = {},
 		backgroundColor = '#ffffff',
 		showGrid = false
 	}: Props = $props();
@@ -125,27 +120,12 @@
 			// Create SVG path from user's drawing
 			const userPathString = PathMath.pointsToSmoothSVGPath(currentPath);
 
-			// Create temporary path element for deformation calculation
-			const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-			pathElement.setAttribute('d', userPathString);
-
-			// Apply backbone deformation using path calculations
-			// Note: Direct DOM manipulation needed for SVG path length calculations
-
-			const deformedPathString = (() => {
-				pathElement.style.visibility = 'hidden';
-				// eslint-disable-next-line svelte/no-dom-manipulating
-				canvas.appendChild(pathElement);
-				try {
-					return BackboneDeformation.createSmoothDeformedStroke(
-						brush,
-						pathElement,
-						deformationOptions
-					);
-				} finally {
-					canvas.removeChild(pathElement);
-				}
-			})();
+			// Apply backbone deformation using point arrays directly
+			// No need for DOM manipulation anymore!
+			const deformedPathString = BackboneDeformation.createSmoothDeformedStroke(
+				brush,
+				currentPath // Pass the point array directly
+			);
 
 			// Add to strokes
 			strokes = [
@@ -219,7 +199,7 @@
 	<!-- Completed strokes -->
 	{#each strokes as stroke, i (i)}
 		<path d={stroke.pathStringDeformed} fill="currentColor" stroke="none" opacity="0.8" />
-		<path d={stroke.pathString} fill="none" stroke="black" opacity="0.8" />
+		<!-- <path d={stroke.pathString} fill="none" stroke="black" opacity="0.8" /> -->
 	{/each}
 
 	<!-- Current stroke preview -->
