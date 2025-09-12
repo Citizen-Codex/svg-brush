@@ -4,165 +4,54 @@
  */
 
 import type { Point } from './PathMath.js';
+import { PathMath } from './PathMath.js';
 import figmaBrushes from './FigmaBrushes.js';
 import svgParser from 'svg-path-parser';
 
 const { parseSVG, makeAbsolute } = svgParser;
-
-export interface BrushBackbone {
-  /** Points defining the central spine of the brush */
-  points: Point[];
-  /** Length of the backbone */
-  length: number;
-  /** Get point at parameter t (0-1) along backbone */
-  getPointAt(t: number): Point;
-  /** Get tangent at parameter t (0-1) along backbone */
-  getTangentAt(t: number): Point;
-  /** Get normal at parameter t (0-1) along backbone */
-  getNormalAt(t: number): Point;
-}
 
 export interface BrushShape {
   points: Point[];
   closed: boolean;
 }
 
-export interface BrushOutline {
-  /** Shapes defining the brush outline */
-  shapes: BrushShape[];
-}
-
 export interface BrushDefinition {
   id: string;
   name: string;
-  backbone: BrushBackbone;
-  outline: BrushOutline;
+  outline: BrushShape[];
+  path: string;
 }
 
 /**
- * Creates a straight horizontal backbone from (0,0) to (length,0)
+ * As a matter of convention, brush backbones are assumed to be from (0,0) to (100,0)
  */
-export function createStraightBackbone(length: number = 100): BrushBackbone {
-  const points = [
-    { x: 0, y: 0 },
-    { x: length, y: 0 }
-  ];
 
-  return {
-    points,
-    length,
 
-    getPointAt(t: number): Point {
-      const clampedT = Math.max(0, Math.min(1, t));
-      return { x: clampedT * length, y: 0 };
-    },
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getTangentAt(_t: number): Point {
-      return { x: 1, y: 0 }; // Always horizontal for straight backbone
-    },
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getNormalAt(_t: number): Point {
-      return { x: 0, y: 1 }; // Always vertical for straight backbone
-    }
-  };
-}
 
 /**
  * Predefined brush geometries
  */
 export class BrushPresets {
-  static roundBrush(width: number = 20): BrushDefinition {
-    const backbone = createStraightBackbone(100);
-    const shape: BrushShape = {
-      points: [],
-      closed: true
-    };
-
-    // Create circular outline
-    const segments = 32;
-    for (let i = 0; i < segments; i++) {
-      const angle = (i / segments) * 2 * Math.PI;
-      shape.points.push({
-        x: 50 + (width / 2) * Math.cos(angle), // Center at backbone midpoint
-        y: (width / 2) * Math.sin(angle)
-      });
-    }
-
+  static createPointsBrush(points: Point[], id: string = 'points', name: string = 'Points Brush'): BrushDefinition {
     return {
-      id: 'round',
-      name: 'Round Brush',
-      backbone,
-      outline: { shapes: [shape] }
-    };
-  }
-
-  static caliggraphyBrush(width: number = 30): BrushDefinition {
-    const backbone = createStraightBackbone(100);
-    const halfWidth = width / 2;
-
-    const shape: BrushShape = {
-      points: [
-        { x: 0, y: -halfWidth * 0.3 }, // Thin start
-        { x: 20, y: -halfWidth }, // Expand
-        { x: 50, y: -halfWidth }, // Wide middle
-        { x: 80, y: -halfWidth }, // Wide middle
-        { x: 100, y: -halfWidth * 0.3 }, // Thin end
-        { x: 100, y: halfWidth * 0.3 }, // Thin end (bottom)
-        { x: 80, y: halfWidth }, // Wide middle (bottom)
-        { x: 50, y: halfWidth }, // Wide middle (bottom)
-        { x: 20, y: halfWidth }, // Expand (bottom)
-        { x: 0, y: halfWidth * 0.3 } // Thin start (bottom)
+      id,
+      name,
+      outline: [
+        {
+          points,
+          closed: false
+        }
       ],
-      closed: true
-    };
-
-    return {
-      id: 'calligraphy',
-      name: 'Calligraphy Brush',
-      backbone,
-      outline: { shapes: [shape] }
+      path: PathMath.pointsToSVGPath(points)
     };
   }
 
-  static textureBrush(width: number = 25): BrushDefinition {
-    const backbone = createStraightBackbone(100);
-    const halfWidth = width / 2;
-    const shape: BrushShape = {
-      points: [],
-      closed: true
-    };
-
-    // Create rough, textured outline
-    const segments = 24;
-    for (let i = 0; i < segments; i++) {
-      const t = i / segments;
-      const angle = t * 2 * Math.PI;
-      const noise = (Math.sin(angle * 6) + Math.cos(angle * 8)) * 0.2;
-      const radius = halfWidth * (1 + noise);
-
-      shape.points.push({
-        x: 50 + radius * Math.cos(angle),
-        y: radius * Math.sin(angle)
-      });
-    }
-
-    return {
-      id: 'texture',
-      name: 'Texture Brush',
-      backbone,
-      outline: { shapes: [shape] }
-    };
-  }
-
-  static pathBrush(
+  static createPathBrush(
     pathData: string,
     offset: number = 0,
     id: string = 'path',
     name: string = 'Path Brush'
   ): BrushDefinition {
-    const backbone = createStraightBackbone(100);
     const shapes = BrushGeometryUtils.svgPathToPoints(pathData);
     shapes.forEach((shape) => {
       shape.points = shape.points.map((point) => ({ x: point.x, y: point.y - offset }));
@@ -171,18 +60,58 @@ export class BrushPresets {
     return {
       id,
       name,
-      backbone,
-      outline: { shapes }
+      outline: shapes,
+      path: PathMath.shapesToSmoothSVGPath(shapes)
     };
   }
 
   static getAllPresets(): BrushDefinition[] {
+    const width = 20;
+    const halfWidth = width / 2;
+    const segments = 32;
+
+    const roundBrushPoints = [];
+    const textureBrushPoints = [];
+    const calligraphyBrushPoints = [
+      { x: 0, y: -halfWidth * 0.3 }, // Thin start
+      { x: 20, y: -halfWidth }, // Expand
+      { x: 50, y: -halfWidth }, // Wide middle
+      { x: 80, y: -halfWidth }, // Wide middle
+      { x: 100, y: -halfWidth * 0.3 }, // Thin end
+      { x: 100, y: halfWidth * 0.3 }, // Thin end (bottom)
+      { x: 80, y: halfWidth }, // Wide middle (bottom)
+      { x: 50, y: halfWidth }, // Wide middle (bottom)
+      { x: 20, y: halfWidth }, // Expand (bottom)
+      { x: 0, y: halfWidth * 0.3 } // Thin start (bottom)
+    ];
+
+
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * 2 * Math.PI;
+      roundBrushPoints.push({
+        x: 50 + (width / 2) * Math.cos(angle), // Center at backbone midpoint
+        y: (width / 2) * Math.sin(angle)
+      });
+    }
+
+    for (let i = 0; i < segments; i++) {
+      const t = i / segments;
+      const angle = t * 2 * Math.PI;
+      const noise = (Math.sin(angle * 6) + Math.cos(angle * 8)) * 0.2;
+      const radius = width * (1 + noise);
+
+      textureBrushPoints.push({
+        x: 50 + radius * Math.cos(angle),
+        y: radius * Math.sin(angle)
+      });
+    }
+
     return [
 
-      ...figmaBrushes.map((brush) => this.pathBrush(brush.path, brush.offset, brush.id, brush.name)),
-      this.roundBrush(),
-      this.caliggraphyBrush(),
-      this.textureBrush(),
+      ...figmaBrushes.map((brush) => this.createPathBrush(brush.path, brush.offset, brush.id, brush.name)),
+      this.createPointsBrush(roundBrushPoints, 'round', 'Round Brush'),
+      this.createPointsBrush(calligraphyBrushPoints, 'calligraphy', 'Calligraphy Brush'),
+      this.createPointsBrush(textureBrushPoints, 'texture', 'Texture Brush'),
     ];
   }
 }
@@ -195,7 +124,7 @@ export class BrushGeometryUtils {
    * Get all outline points as a flat array (useful for deformation)
    */
   static getOutlinePoints(brush: BrushDefinition): Point[] {
-    return brush.outline.shapes.flatMap((s) => s.points);
+    return brush.outline.flatMap((s) => s.points);
   }
 
   /**

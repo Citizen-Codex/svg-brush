@@ -1,68 +1,14 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { BrushPresets, type BrushDefinition } from '$lib/BrushGeometry.js';
-	import { PathMath } from '$lib/PathMath.js';
 
 	// Props
 	interface Props {
 		selectedBrush?: BrushDefinition;
-		showPreview?: boolean;
-		previewSize?: number;
 	}
 
-	let {
-		selectedBrush = BrushPresets.roundBrush(),
-		showPreview = true,
-		previewSize = 60
-	}: Props = $props();
-
-	// State
 	let availableBrushes = $state(BrushPresets.getAllPresets());
 
-	// Event dispatcher
-	const dispatch = createEventDispatcher<{
-		brushChanged: BrushDefinition;
-	}>();
-
-	// Handlers
-	function selectBrush(brush: BrushDefinition) {
-		selectedBrush = brush;
-		dispatch('brushChanged', brush);
-	}
-
-	// Generate preview SVG for a brush
-	function generateBrushPreview(brush: BrushDefinition, size: number = previewSize): string {
-		let pathString = '';
-		for (const shape of brush.outline.shapes) {
-			if (shape.points.length > 0) {
-				pathString += PathMath.pointsToSVGPath(shape.points) + (shape.closed ? ' Z' : '');
-			}
-		}
-
-		if (pathString === '') return '';
-
-		return `
-      <svg width="${size}" height="${size}" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
-        <g transform="translate(10, 30)">
-          <path d="${pathString}" fill="#333" stroke="none" />
-          <path d="M ${brush.backbone.points[0].x} ${brush.backbone.points[0].y} L ${brush.backbone.points[brush.backbone.points.length - 1].x} ${brush.backbone.points[brush.backbone.points.length - 1].y}" stroke="#666" stroke-width="1" stroke-dasharray="2,2" opacity="0.5" />
-        </g>
-      </svg>
-    `;
-	}
-
-	// Reactive preview updates
-
-	let brushPreviews = $state(new Map<string, string>());
-
-	$effect(() => {
-		// Generate previews for all brushes
-		const newPreviews = new Map();
-		for (const brush of availableBrushes) {
-			newPreviews.set(brush.id, generateBrushPreview(brush));
-		}
-		brushPreviews = newPreviews;
-	});
+	let { selectedBrush = $bindable(availableBrushes[0]) }: Props = $props();
 </script>
 
 <div class="brush-selector">
@@ -74,15 +20,24 @@
 			<button
 				class="brush-option"
 				class:selected={selectedBrush?.id === brush.id}
-				onclick={() => selectBrush(brush)}
+				onclick={() => (selectedBrush = brush)}
 				title={brush.name}
 			>
-				{#if showPreview && brushPreviews.has(brush.id)}
-					<div class="brush-preview">
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-						{@html brushPreviews.get(brush.id)}
-					</div>
-				{/if}
+				<div class="brush-preview">
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					<svg width="100%" height="100%" viewBox="0 0 120 60">
+						<g transform="translate(10, 30)">
+							<path d={brush.path} fill="#333" stroke="none" />
+							<path
+								d="M 0 0 L 100 0"
+								stroke="#666"
+								stroke-width="1"
+								stroke-dasharray="2,2"
+								opacity="0.5"
+							/>
+						</g>
+					</svg>
+				</div>
 
 				<div class="brush-info">
 					<span class="brush-name">{brush.name}</span>

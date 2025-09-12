@@ -1,7 +1,7 @@
 <script lang="ts">
 	import SvgCanvas from './SvgCanvas.svelte';
 	import BrushSelector from './BrushSelector.svelte';
-	import { BrushPresets, type BrushDefinition } from '$lib/BrushGeometry.js';
+	import { type BrushDefinition } from '$lib/BrushGeometry.js';
 	import type { Point } from '$lib/PathMath.js';
 
 	// Props
@@ -15,7 +15,7 @@
 
 	// State
 	let canvas: SvgCanvas;
-	let selectedBrush = $state<BrushDefinition>(BrushPresets.roundBrush());
+	let selectedBrush = $state<BrushDefinition>(null);
 	let isDrawing = $state(false);
 	let strokeCount = $state(0);
 	let showGrid = $state(false);
@@ -30,15 +30,6 @@
 		averageStrokeLength: 0,
 		drawingStartTime: 0
 	});
-
-	// Handlers
-	function handleBrushChanged(event: CustomEvent<BrushDefinition>) {
-		selectedBrush = event.detail;
-	}
-
-	function handleBrushScaleChanged(event: CustomEvent<{ brush: BrushDefinition; scale: number }>) {
-		selectedBrush = event.detail.brush;
-	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleStrokeStart(_event: CustomEvent<{ point: Point; brush: BrushDefinition }>) {
@@ -85,22 +76,6 @@
 			drawingStats.totalStrokes = Math.max(0, drawingStats.totalStrokes - 1);
 		}
 	}
-
-	function exportDrawing() {
-		if (canvas) {
-			const svgContent = canvas.exportSVG();
-			const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-			const url = URL.createObjectURL(blob);
-
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `svg-brush-drawing-${Date.now()}.svg`;
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-			URL.revokeObjectURL(url);
-		}
-	}
 </script>
 
 <div class="drawing-app">
@@ -123,18 +98,13 @@
 				<button onclick={undoStroke} class="btn btn-secondary" disabled={strokeCount === 0}>
 					Undo
 				</button>
-				<button onclick={exportDrawing} class="btn btn-primary">Export SVG</button>
 			</div>
 		</div>
 	{/if}
 
 	<div class="main-content">
 		<div class="sidebar">
-			<BrushSelector
-				{selectedBrush}
-				on:brushChanged={handleBrushChanged}
-				on:brushScaleChanged={handleBrushScaleChanged}
-			/>
+			<BrushSelector bind:selectedBrush />
 		</div>
 
 		<div class="canvas-container">
@@ -229,15 +199,6 @@
 		transition: background-color 0.2s ease;
 	}
 
-	.btn-primary {
-		background: #007bff;
-		color: white;
-	}
-
-	.btn-primary:hover {
-		background: #0056b3;
-	}
-
 	.btn-secondary {
 		background: #6c757d;
 		color: white;
@@ -259,16 +220,6 @@
 
 	.btn-danger:hover {
 		background: #c82333;
-	}
-
-	.btn-small {
-		padding: 0.25rem 0.5rem;
-		font-size: 0.8rem;
-	}
-
-	.drawing-stats p {
-		margin: 0.5rem 0;
-		font-size: 0.9rem;
 	}
 
 	/* Responsive design */
