@@ -3,6 +3,7 @@
  * Handles path analysis, tangent/normal calculations, and coordinate transformations
  */
 import type { BrushShape } from './BrushGeometry.js';
+import simplify from 'simplify-js';
 
 export interface Point {
   x: number;
@@ -27,12 +28,13 @@ export class PathMath {
   /**
    * Create a smooth SVG path string using quadratic bezier curves
    */
-  static pointsToSmoothSVGPath(points: Point[]): string {
-    if (points.length === 0) return '';
-    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-    if (points.length === 2) {
-      return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  static pointsToSmoothSVGPath(rawPoints: Point[], simplificationTolerance: number = 0.3): string {
+    if (rawPoints.length === 0) return '';
+    if (rawPoints.length === 1) return `M ${rawPoints[0].x} ${rawPoints[0].y}`;
+    if (rawPoints.length === 2) {
+      return `M ${rawPoints[0].x} ${rawPoints[0].y} L ${rawPoints[1].x} ${rawPoints[1].y}`;
     }
+    const points = simplify(rawPoints, simplificationTolerance);
 
     let path = `M ${points[0].x} ${points[0].y}`;
 
