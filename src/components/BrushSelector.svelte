@@ -4,11 +4,13 @@
 	// Props
 	interface Props {
 		selectedBrush?: BrushDefinition;
+		strokeWidth?: number; // Multiplier for brush thickness
 	}
 
 	let availableBrushes = $state(BrushPresets.getAllPresets());
 
-	let { selectedBrush = $bindable(availableBrushes[0]) }: Props = $props();
+	let { selectedBrush = $bindable(availableBrushes[0]), strokeWidth = $bindable(1) }: Props =
+		$props();
 </script>
 
 <div class="brush-selector">
@@ -44,6 +46,23 @@
 				</div>
 			</button>
 		{/each}
+	</div>
+
+	<!-- Stroke width control -->
+	<div class="stroke-width-controls">
+		<label for="strokeWidth" class="control-label">Stroke Width</label>
+		<div class="control-row">
+			<input id="strokeWidth" type="range" min="0.2" max="4" step="0.1" bind:value={strokeWidth} />
+			<input
+				type="number"
+				min="0.1"
+				max="10"
+				step="0.1"
+				bind:value={strokeWidth}
+				class="number-input"
+			/>
+		</div>
+		<div class="hint">1 = base width, 2 = double, 0.5 = half</div>
 	</div>
 </div>
 
@@ -121,5 +140,37 @@
 		.brush-option {
 			min-height: 80px;
 		}
+	}
+
+	.stroke-width-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding-top: 0.5rem;
+		border-top: 1px dashed #ddd;
+	}
+
+	.control-label {
+		font-weight: 600;
+		color: #333;
+	}
+
+	.control-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.number-input {
+		width: 80px;
+		padding: 0.25rem 0.5rem;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		background: white;
+	}
+
+	.hint {
+		font-size: 0.8rem;
+		color: #666;
 	}
 </style>

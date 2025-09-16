@@ -11,7 +11,7 @@
 </svelte:head>
 
 <main>
-	<DrawingApp canvasWidth={800} canvasHeight={600} showToolbar={true} showBrushSelector={true} />
+	<DrawingApp canvasWidth={800} canvasHeight={600} showToolbar={true} />
 </main>
 
 <style>

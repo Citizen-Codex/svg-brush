@@ -2,14 +2,13 @@
 
 A TypeScript library for creating interactive SVG drawing applications with advanced **backbone deformation** brush techniques. Built as a SvelteKit package, this library provides mathematical utilities and Svelte components for implementing sophisticated brush-based drawing systems.
 
-
 ### Package Structure
 
 ```
 src/
 ├── lib/
 │   ├── index.ts              # Main exports
-│   ├── PathMath.ts           # SVG path mathematics  
+│   ├── PathMath.ts           # SVG path mathematics
 │   ├── BrushGeometry.ts      # Brush definitions
 │   ├── BackboneDeformation.ts # Deformation algorithms
 │   └── FigmaBrushes.ts       # Figma brush definitions
@@ -20,4 +19,3 @@ src/
 └── routes/
     └── +page.svelte          # Demo page
 ```
-

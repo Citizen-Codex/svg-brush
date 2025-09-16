@@ -18,7 +18,7 @@
 	let selectedBrush = $state<BrushDefinition>(null);
 	let isDrawing = $state(false);
 	let strokeCount = $state(0);
-	let showGrid = $state(false);
+	let strokeWidth = $state(1);
 
 	// Canvas background
 	let canvasBackground = $state('#ffffff');
@@ -104,7 +104,7 @@
 
 	<div class="main-content">
 		<div class="sidebar">
-			<BrushSelector bind:selectedBrush />
+			<BrushSelector bind:selectedBrush bind:strokeWidth />
 		</div>
 
 		<div class="canvas-container">
@@ -114,7 +114,7 @@
 				height={canvasHeight}
 				brush={selectedBrush}
 				backgroundColor={canvasBackground}
-				{showGrid}
+				{strokeWidth}
 				on:strokeStart={handleStrokeStart}
 				on:strokeUpdate={handleStrokeUpdate}
 				on:strokeEnd={handleStrokeEnd}

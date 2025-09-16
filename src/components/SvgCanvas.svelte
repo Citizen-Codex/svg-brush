@@ -10,7 +10,7 @@
 		height?: number;
 		brush?: BrushDefinition;
 		backgroundColor?: string;
-		showGrid?: boolean;
+		strokeWidth?: number; // Multiplier for brush thickness
 	}
 
 	let {
@@ -18,7 +18,7 @@
 		height = 600,
 		brush,
 		backgroundColor = '#ffffff',
-		showGrid = false
+		strokeWidth = 1
 	}: Props = $props();
 
 	// State
@@ -124,7 +124,8 @@
 			// No need for DOM manipulation anymore!
 			const deformedPathString = BackboneDeformation.createSmoothDeformedStroke(
 				brush,
-				currentPath // Pass the point array directly
+				currentPath, // Pass the point array directly
+				{ strokeWidth }
 			);
 
 			// Add to strokes
@@ -153,28 +154,6 @@
 			strokes = strokes.slice(0, -1);
 		}
 	}
-
-	export function exportSVG(): string {
-		const svgContent = canvas.outerHTML;
-		return svgContent;
-	}
-
-	// Grid pattern
-	let gridPattern: string = $state('');
-
-	$effect(() => {
-		if (showGrid) {
-			gridPattern = `
-        <defs>
-          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5" opacity="0.5"/>
-          </pattern>
-        </defs>
-      `;
-		} else {
-			gridPattern = '';
-		}
-	});
 </script>
 
 <svg
@@ -188,13 +167,13 @@
 	onpointercancel={handlePointerUp}
 	xmlns="http://www.w3.org/2000/svg"
 >
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html gridPattern}
+	<defs>
+		<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+			<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5" opacity="0.5" />
+		</pattern>
+	</defs>
 
-	<!-- Grid background -->
-	{#if showGrid}
-		<rect width="100%" height="100%" fill="url(#grid)" />
-	{/if}
+	<rect width="100%" height="100%" fill="url(#grid)" />
 
 	<!-- Completed strokes -->
 	{#each strokes as stroke, i (i)}
