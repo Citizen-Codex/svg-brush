@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      simplify-js:
+        specifier: ^1.2.4
+        version: 1.2.4
       svg-path-parser:
         specifier: ^1.1.0
         version: 1.1.0
@@ -57,9 +60,6 @@ importers:
       publint:
         specifier: ^0.3.2
         version: 0.3.12
-      simplify-js:
-        specifier: ^1.2.4
-        version: 1.2.4
       svelte:
         specifier: ^5.0.0
         version: 5.38.10
