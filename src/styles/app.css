@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas-background: #ffffff;
+  --color-canvas-panel: #ffffff;
+  --color-canvas-accent: #ffdf00;
+  --color-canvas-foreground: #000000;
+}
+
+@layer base {
+  html,
+  body {
+    @apply h-full bg-canvas-background text-black antialiased;
+  }
+
+  body {
+    @apply m-0;
+  }
+
+  #app,
+  body > div:first-of-type {
+    @apply h-full;
+  }
+}

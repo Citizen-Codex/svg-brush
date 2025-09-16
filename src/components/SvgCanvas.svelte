@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { type Point, type Brush, pointsToSmoothPath, createBrushStroke } from '$lib/index.js';
 
-	// Props
 	interface Props {
 		width?: number;
 		height?: number;
-		brush?: Brush;
+		brush?: Brush | null;
 		backgroundColor?: string;
-		strokeWidth?: number; // Multiplier for brush thickness
+		strokeWidth?: number;
+		[key: string]: any;
 	}
 
 	let {
@@ -16,24 +15,16 @@
 		height = 600,
 		brush,
 		backgroundColor = '#ffffff',
-		strokeWidth = 1
+		strokeWidth = 1,
+		...rest
 	}: Props = $props();
 
-	// State
 	let canvas: SVGSVGElement;
 	let isDrawing = $state(false);
 	let currentPath: Point[] = $state([]);
 	let strokes: { pathStringDeformed: string; pathString: string; brush: Brush }[] = $state([]);
 	let tempPathElement: SVGPathElement | null = $state(null);
 
-	// Event dispatcher
-	const dispatch = createEventDispatcher<{
-		strokeStart: { point: Point; brush: Brush };
-		strokeUpdate: { path: Point[]; brush: Brush };
-		strokeEnd: { pathString: string; brush: Brush };
-	}>();
-
-	// Drawing handlers
 	function handlePointerDown(event: PointerEvent) {
 		if (!brush) return;
 
@@ -41,10 +32,7 @@
 		isDrawing = true;
 		currentPath = [point];
 
-		// Set pointer capture
 		(event.target as Element).setPointerCapture(event.pointerId);
-
-		dispatch('strokeStart', { point, brush });
 	}
 
 	function handlePointerMove(event: PointerEvent) {
@@ -53,28 +41,21 @@
 		const point = getPointFromEvent(event);
 		currentPath = [...currentPath, point];
 
-		// Update live preview if we have enough points
 		if (currentPath.length >= 2) {
 			updatePreviewStroke();
 		}
-
-		dispatch('strokeUpdate', { path: currentPath, brush });
 	}
 
 	function handlePointerUp(event: PointerEvent) {
 		if (!isDrawing || !brush) return;
 
 		isDrawing = false;
-
-		// Release pointer capture
 		(event.target as Element).releasePointerCapture(event.pointerId);
 
-		// Finalize the stroke
 		if (currentPath.length >= 2) {
 			finalizeStroke();
 		}
 
-		// Clear preview
 		tempPathElement = null;
 		currentPath = [];
 	}
@@ -90,54 +71,36 @@
 	function updatePreviewStroke() {
 		if (!brush || currentPath.length < 2) return;
 
-		// Create temporary SVG path for the user's drawing
 		const pathString = pointsToSmoothPath(currentPath);
 
-		// Create a temporary path element to use for deformation
 		if (!tempPathElement) {
 			tempPathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 		}
 
 		tempPathElement.setAttribute('d', pathString);
-
-		// This is a bit of a hack - we need the path to be in the DOM to calculate lengths
-		// In a real implementation, you might want to use a more robust path calculation
-		try {
-			// For preview, we'll use the simple path without deformation
-			// The deformation will be applied on finalization
-		} catch (error) {
-			console.warn('Error updating preview stroke:', error);
-		}
 	}
 
 	function finalizeStroke() {
 		if (!brush || currentPath.length < 2) return;
+		const userPathString = pointsToSmoothPath(currentPath);
 
 		try {
-			// Create SVG path from user's drawing
-			const userPathString = pointsToSmoothPath(currentPath);
-
-			// Apply backbone deformation using point arrays directly
-			// No need for DOM manipulation anymore!
 			const deformedPathString = createBrushStroke(currentPath, brush, { strokeWidth });
 
-			// Add to strokes
 			strokes = [
 				...strokes,
 				{ pathString: userPathString, pathStringDeformed: deformedPathString, brush }
 			];
-
-			dispatch('strokeEnd', { pathString: deformedPathString, brush });
+			rest.onstrokeend?.(deformedPathString);
 		} catch (error) {
 			console.error('Error finalizing stroke:', error);
-
-			// Fallback: just add the user path without deformation
-			const fallbackPath = pointsToSmoothPath(currentPath);
-			strokes = [...strokes, { pathString: fallbackPath, pathStringDeformed: fallbackPath, brush }];
+			strokes = [
+				...strokes,
+				{ pathString: userPathString, pathStringDeformed: userPathString, brush }
+			];
 		}
 	}
 
-	// Public methods
 	export function clearCanvas() {
 		strokes = [];
 	}
@@ -153,7 +116,9 @@
 	bind:this={canvas}
 	{width}
 	{height}
-	style="background-color: {backgroundColor}; cursor: crosshair; touch-action: none;"
+	class="h-full w-full max-w-full cursor-crosshair rounded-2xl border border-black/10 bg-white text-black shadow-inner"
+	style:background-color={backgroundColor}
+	style:touch-action="none"
 	onpointerdown={handlePointerDown}
 	onpointermove={handlePointerMove}
 	onpointerup={handlePointerUp}
@@ -162,19 +127,16 @@
 >
 	<defs>
 		<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-			<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5" opacity="0.5" />
+			<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#000000" stroke-width="0.5" opacity="0.1" />
 		</pattern>
 	</defs>
 
 	<rect width="100%" height="100%" fill="url(#grid)" />
 
-	<!-- Completed strokes -->
 	{#each strokes as stroke, i (i)}
-		<path d={stroke.pathStringDeformed} fill="currentColor" stroke="none" opacity="0.8" />
-		<!-- <path d={stroke.pathString} fill="none" stroke="black" opacity="0.8" /> -->
+		<path d={stroke.pathStringDeformed} fill="currentColor" class="text-black" opacity="0.82" />
 	{/each}
 
-	<!-- Current stroke preview -->
 	{#if isDrawing && currentPath.length >= 2}
 		<path
 			d={pointsToSmoothPath(currentPath)}
@@ -183,17 +145,7 @@
 			stroke-width="2"
 			stroke-dasharray="5,5"
 			opacity="0.5"
+			class="text-canvas-accent"
 		/>
 	{/if}
 </svg>
-
-<style>
-	svg {
-		border: 1px solid #ccc;
-		display: block;
-	}
-
-	path {
-		color: #333;
-	}
-</style>

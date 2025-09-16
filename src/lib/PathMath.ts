@@ -16,8 +16,10 @@ export interface Point {
 /**
  * Create an SVG path string from an array of points
  */
-export function pointsToPath(points: Point[]): string {
-  if (points.length === 0) return '';
+export function pointsToPath(rawPoints: Point[], simplificationTolerance: number = 0.3): string {
+  if (rawPoints.length === 0) return '';
+
+  const points = simplify(rawPoints, simplificationTolerance);
 
   let path = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {

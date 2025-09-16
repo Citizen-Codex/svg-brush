@@ -1,38 +1,47 @@
 <script lang="ts">
 	import { type Brush, getAllBrushes } from '$lib/index.js';
 
-	// Props
 	interface Props {
-		selectedBrush?: Brush;
-		strokeWidth?: number; // Multiplier for brush thickness
+		selectedBrush?: Brush | null;
+		strokeWidth?: number;
 	}
 
-	let availableBrushes = $state(getAllBrushes());
+	const availableBrushes = $state(getAllBrushes());
 
 	let { selectedBrush = $bindable(availableBrushes[0]), strokeWidth = $bindable(1) }: Props =
 		$props();
+
+	const brushButtonBase =
+		'group relative flex w-full flex-col items-center gap-4 rounded-xl border border-black/10 bg-white px-5 py-5 text-left shadow-sm transition hover:border-black hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-accent';
+
+	function chooseBrush(brush: Brush) {
+		selectedBrush = brush;
+	}
 </script>
 
-<div class="brush-selector">
-	<h3>Brush Selection</h3>
+<section class="flex flex-col gap-6 rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+	<header class="flex flex-col gap-1">
+		<h3 class="text-lg font-semibold text-black">Brush Selection</h3>
+		<p class="text-sm text-black/70">Preview and choose a brush, then adjust the stroke width.</p>
+	</header>
 
-	<!-- Brush Grid -->
-	<div class="brush-grid">
+	<div class="max-h-72 md:max-h-[50vh] space-y-4 overflow-y-auto pr-1 py-1">
 		{#each availableBrushes as brush (brush.name)}
+			{@const isSelected = selectedBrush?.name === brush.name}
 			<button
-				class="brush-option"
-				class:selected={selectedBrush?.name === brush.name}
-				onclick={() => (selectedBrush = brush)}
+				type="button"
+				class={`${brushButtonBase} ${isSelected ? 'border-canvas-accent ring-2 ring-canvas-accent' : ''}`}
+				onclick={() => chooseBrush(brush)}
 				title={brush.name}
 			>
-				<div class="brush-preview">
-					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-					<svg width="100%" height="100%" viewBox="0 0 120 60">
-						<g transform="translate(10, 30)">
-							<path d={brush.path} fill="#333" stroke="none" />
+				<div class="flex h-24 w-full items-center justify-center rounded-lg bg-white">
+					<svg class="h-full w-full text-black" viewBox="0 0 100 16" aria-hidden="true">
+						<g transform="translate(0, 8)">
+							<path d={brush.path} fill="currentColor" stroke="none" />
 							<path
 								d="M 0 0 L 100 0"
-								stroke="#666"
+								stroke="currentColor"
+								class="text-black/30"
 								stroke-width="1"
 								stroke-dasharray="2,2"
 								opacity="0.5"
@@ -41,136 +50,36 @@
 					</svg>
 				</div>
 
-				<div class="brush-info">
-					<span class="brush-name">{brush.name}</span>
+				<div class="text-center">
+					<span class="text-sm font-medium text-black">{brush.name}</span>
 				</div>
 			</button>
 		{/each}
 	</div>
 
-	<!-- Stroke width control -->
-	<div class="stroke-width-controls">
-		<label for="strokeWidth" class="control-label">Stroke Width</label>
-		<div class="control-row">
-			<input id="strokeWidth" type="range" min="0.2" max="4" step="0.1" bind:value={strokeWidth} />
+	<div class="flex flex-col gap-3 border-t border-dashed border-black/20 pt-4">
+		<label for="strokeWidth" class="text-sm font-semibold text-black">Stroke Width</label>
+
+		<div class="flex items-center gap-3">
+			<input
+				id="strokeWidth"
+				type="range"
+				min="0.2"
+				max="4"
+				step="0.1"
+				bind:value={strokeWidth}
+				class="h-2 flex-1 cursor-pointer rounded-lg accent-canvas-accent"
+			/>
 			<input
 				type="number"
 				min="0.1"
 				max="10"
 				step="0.1"
 				bind:value={strokeWidth}
-				class="number-input"
+				class="w-24 rounded-md border border-black/20 bg-white px-3 py-2 text-sm font-medium text-black focus:border-canvas-accent focus:outline-none focus:ring-2 focus:ring-canvas-accent/40"
 			/>
 		</div>
-		<div class="hint">1 = base width, 2 = double, 0.5 = half</div>
+
+		<p class="text-xs text-black/70">1 = base width, 2 = double thickness, 0.5 = half.</p>
 	</div>
-</div>
-
-<style>
-	.brush-selector {
-		padding: 1rem;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		background: #fafafa;
-		max-width: 400px;
-	}
-
-	h3 {
-		margin: 0 0 1rem 0;
-		color: #333;
-	}
-
-	.brush-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-		gap: 0.5rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.brush-option {
-		padding: 0.5rem;
-		border: 2px solid #ddd;
-		border-radius: 8px;
-		background: white;
-		cursor: pointer;
-		transition: all 0.2s ease;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-		min-height: 100px;
-	}
-
-	.brush-option:hover {
-		border-color: #999;
-		transform: translateY(-2px);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.brush-option.selected {
-		border-color: #007bff;
-		background: #f0f8ff;
-		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-	}
-
-	.brush-preview {
-		flex-shrink: 0;
-	}
-
-	.brush-info {
-		text-align: center;
-		flex-grow: 1;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-	}
-
-	.brush-name {
-		font-weight: 600;
-		color: #333;
-		font-size: 0.9rem;
-	}
-
-	/* Responsive adjustments */
-	@media (max-width: 480px) {
-		.brush-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.brush-option {
-			min-height: 80px;
-		}
-	}
-
-	.stroke-width-controls {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		padding-top: 0.5rem;
-		border-top: 1px dashed #ddd;
-	}
-
-	.control-label {
-		font-weight: 600;
-		color: #333;
-	}
-
-	.control-row {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.number-input {
-		width: 80px;
-		padding: 0.25rem 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		background: white;
-	}
-
-	.hint {
-		font-size: 0.8rem;
-		color: #666;
-	}
-</style>
+</section>

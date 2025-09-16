@@ -13,6 +13,12 @@ export interface DeformationOptions {
    * 1 = original width, 2 = double thickness, 0.5 = half thickness.
    */
   strokeWidth?: number;
+
+  /**
+   * Simplification tolerance for path simplification [0-1], defaults to 0.3.
+   * Higher values result in more simplified paths.
+   */
+  simplificationTolerance?: number;
 }
 
 export interface ProjectionResult {
@@ -150,7 +156,7 @@ function getNormalAt(points: Point[], t: number): Point {
  * Deform entire brush geometry along a user-drawn path using all brush points
  * This ensures every brush point is preserved and properly positioned
  */
-function deformBrush(
+export function deformBrush(
   userPathPoints: Point[],
   brush: Brush,
   options?: DeformationOptions
@@ -205,7 +211,7 @@ export function createBrushStroke(
   let pathString = '';
   for (let i = 0; i < deformedShapes.length; i++) {
     const shapePoints = deformedShapes[i];
-    pathString += pointsToSmoothPath(shapePoints);
+    pathString += pointsToSmoothPath(shapePoints, options?.simplificationTolerance);
     if (brush.outline[i].closed) {
       pathString += ' Z';
     }
