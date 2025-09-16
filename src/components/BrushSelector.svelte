@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { BrushPresets, type BrushDefinition } from '$lib/BrushGeometry.js';
+	import { type Brush, getAllBrushes } from '$lib/index.js';
 
 	// Props
 	interface Props {
-		selectedBrush?: BrushDefinition;
+		selectedBrush?: Brush;
 		strokeWidth?: number; // Multiplier for brush thickness
 	}
 
-	let availableBrushes = $state(BrushPresets.getAllPresets());
+	let availableBrushes = $state(getAllBrushes());
 
 	let { selectedBrush = $bindable(availableBrushes[0]), strokeWidth = $bindable(1) }: Props =
 		$props();
@@ -18,10 +18,10 @@
 
 	<!-- Brush Grid -->
 	<div class="brush-grid">
-		{#each availableBrushes as brush (brush.id)}
+		{#each availableBrushes as brush (brush.name)}
 			<button
 				class="brush-option"
-				class:selected={selectedBrush?.id === brush.id}
+				class:selected={selectedBrush?.name === brush.name}
 				onclick={() => (selectedBrush = brush)}
 				title={brush.name}
 			>

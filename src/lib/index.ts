@@ -1,17 +1,8 @@
-// SVG Brush Drawing Library
-// Main entry point for the backbone deformation brush system
+// Brush definitions
+export { type Brush, getBrush, getAllBrushes } from './BrushDefinitions.js';
 
-// Core mathematical utilities
-export { PathMath, type Point } from './PathMath.js';
-
-// Brush geometry system
-export { BrushPresets, BrushGeometryUtils, type BrushDefinition } from './BrushGeometry.js';
+// Core path utilities
+export { type Point, pointsToSmoothPath } from './PathMath.js';
 
 // Deformation engine
-export {
-	BackboneDeformation,
-	type ProjectionResult,
-	type DeformationOptions
-} from './BackboneDeformation.js';
-
-export { default as figmaBrushes } from './FigmaBrushes.js';
+export { createBrushStroke } from './Deformation.js';

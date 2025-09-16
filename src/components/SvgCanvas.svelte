@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { BrushDefinition } from '$lib/BrushGeometry.js';
-	import { BackboneDeformation } from '$lib/BackboneDeformation.js';
-	import { PathMath, type Point } from '$lib/PathMath.js';
+	import { type Point, type Brush, pointsToSmoothPath, createBrushStroke } from '$lib/index.js';
 
 	// Props
 	interface Props {
 		width?: number;
 		height?: number;
-		brush?: BrushDefinition;
+		brush?: Brush;
 		backgroundColor?: string;
 		strokeWidth?: number; // Multiplier for brush thickness
 	}
@@ -25,15 +23,14 @@
 	let canvas: SVGSVGElement;
 	let isDrawing = $state(false);
 	let currentPath: Point[] = $state([]);
-	let strokes: { pathStringDeformed: string; pathString: string; brush: BrushDefinition }[] =
-		$state([]);
+	let strokes: { pathStringDeformed: string; pathString: string; brush: Brush }[] = $state([]);
 	let tempPathElement: SVGPathElement | null = $state(null);
 
 	// Event dispatcher
 	const dispatch = createEventDispatcher<{
-		strokeStart: { point: Point; brush: BrushDefinition };
-		strokeUpdate: { path: Point[]; brush: BrushDefinition };
-		strokeEnd: { pathString: string; brush: BrushDefinition };
+		strokeStart: { point: Point; brush: Brush };
+		strokeUpdate: { path: Point[]; brush: Brush };
+		strokeEnd: { pathString: string; brush: Brush };
 	}>();
 
 	// Drawing handlers
@@ -94,7 +91,7 @@
 		if (!brush || currentPath.length < 2) return;
 
 		// Create temporary SVG path for the user's drawing
-		const pathString = PathMath.pointsToSmoothSVGPath(currentPath);
+		const pathString = pointsToSmoothPath(currentPath);
 
 		// Create a temporary path element to use for deformation
 		if (!tempPathElement) {
@@ -118,15 +115,11 @@
 
 		try {
 			// Create SVG path from user's drawing
-			const userPathString = PathMath.pointsToSmoothSVGPath(currentPath);
+			const userPathString = pointsToSmoothPath(currentPath);
 
 			// Apply backbone deformation using point arrays directly
 			// No need for DOM manipulation anymore!
-			const deformedPathString = BackboneDeformation.createSmoothDeformedStroke(
-				brush,
-				currentPath, // Pass the point array directly
-				{ strokeWidth }
-			);
+			const deformedPathString = createBrushStroke(currentPath, brush, { strokeWidth });
 
 			// Add to strokes
 			strokes = [
@@ -139,7 +132,7 @@
 			console.error('Error finalizing stroke:', error);
 
 			// Fallback: just add the user path without deformation
-			const fallbackPath = PathMath.pointsToSmoothSVGPath(currentPath);
+			const fallbackPath = pointsToSmoothPath(currentPath);
 			strokes = [...strokes, { pathString: fallbackPath, pathStringDeformed: fallbackPath, brush }];
 		}
 	}
@@ -184,7 +177,7 @@
 	<!-- Current stroke preview -->
 	{#if isDrawing && currentPath.length >= 2}
 		<path
-			d={PathMath.pointsToSmoothSVGPath(currentPath)}
+			d={pointsToSmoothPath(currentPath)}
 			fill="none"
 			stroke="currentColor"
 			stroke-width="2"

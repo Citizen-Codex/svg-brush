@@ -1,8 +1,7 @@
 <script lang="ts">
 	import SvgCanvas from './SvgCanvas.svelte';
 	import BrushSelector from './BrushSelector.svelte';
-	import { type BrushDefinition } from '$lib/BrushGeometry.js';
-	import type { Point } from '$lib/PathMath.js';
+	import { type Brush, type Point } from '$lib/index.js';
 
 	// Props
 	interface Props {
@@ -15,7 +14,7 @@
 
 	// State
 	let canvas: SvgCanvas;
-	let selectedBrush = $state<BrushDefinition>(null);
+	let selectedBrush = $state<Brush>(null);
 	let isDrawing = $state(false);
 	let strokeCount = $state(0);
 	let strokeWidth = $state(1);
@@ -32,7 +31,7 @@
 	});
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	function handleStrokeStart(_event: CustomEvent<{ point: Point; brush: BrushDefinition }>) {
+	function handleStrokeStart(_event: CustomEvent<{ point: Point; brush: Brush }>) {
 		isDrawing = true;
 		if (drawingStats.totalStrokes === 0) {
 			drawingStats.drawingStartTime = Date.now();
@@ -40,11 +39,11 @@
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	function handleStrokeUpdate(_event: CustomEvent<{ path: Point[]; brush: BrushDefinition }>) {
+	function handleStrokeUpdate(_event: CustomEvent<{ path: Point[]; brush: Brush }>) {
 		// Could be used for real-time feedback or analytics
 	}
 
-	function handleStrokeEnd(event: CustomEvent<{ pathString: string; brush: BrushDefinition }>) {
+	function handleStrokeEnd(event: CustomEvent<{ pathString: string; brush: Brush }>) {
 		isDrawing = false;
 		strokeCount++;
 
