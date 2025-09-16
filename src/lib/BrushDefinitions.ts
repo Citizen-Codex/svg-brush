@@ -18,6 +18,8 @@ export interface Brush {
   path: string;
 }
 
+export type FigmaBrushes = typeof figmaBrushes[number]['name'];
+
 /**
  * As a matter of convention, brush backbones are assumed to be from (0,0) to (100,0)
  */

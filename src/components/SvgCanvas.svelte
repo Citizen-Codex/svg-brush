@@ -85,7 +85,10 @@
 		const userPathString = pointsToSmoothPath(currentPath);
 
 		try {
-			const deformedPathString = createBrushStroke(currentPath, brush, { strokeWidth });
+			const deformedPathString = createBrushStroke(currentPath, {
+				brush,
+				strokeWidth
+			});
 
 			strokes = [
 				...strokes,

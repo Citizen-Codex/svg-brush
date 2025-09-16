@@ -5,9 +5,14 @@
 
 import type { Point } from './PathMath.js';
 import { pointsToSmoothPath } from './PathMath.js';
-import { getBrush, type Brush } from './BrushDefinitions.js';
+import { getBrush, type Brush, type FigmaBrushes } from './BrushDefinitions.js';
 
 export interface DeformationOptions {
+  /** A string with a brush name from a set of pre-existing brushes 
+   * or a Brush object containing a custom brush definition.
+   */
+  brush: Brush | FigmaBrushes;
+
   /**
    * Multiplier for brush thickness relative to its base geometry.
    * 1 = original width, 2 = double thickness, 0.5 = half thickness.
@@ -159,11 +164,10 @@ function getNormalAt(points: Point[], t: number): Point {
 export function deformBrush(
   userPathPoints: Point[],
   brush: Brush,
-  options?: DeformationOptions
+  thickness: number = 1,
 ): Point[][] {
   if (userPathPoints.length < 2) return [];
   const deformedShapes: Point[][] = [];
-  const thickness = options?.strokeWidth ?? 1;
 
   for (const shape of brush.outline) {
     const deformedPoints: Point[] = [];
@@ -199,14 +203,21 @@ export function deformBrush(
  */
 export function createBrushStroke(
   userPathPoints: Point[],
-  brush: Brush | string,
   options?: DeformationOptions
 ): string {
-  if (typeof brush === 'string') {
-    brush = getBrush(brush);
+  let brush: Brush;
+
+  if (options?.brush) {
+    if (typeof options.brush === 'string') {
+      brush = getBrush(options.brush);
+    } else {
+      brush = options.brush;
+    }
+  } else {
+    brush = getBrush('Figma Blockbuster');
   }
 
-  const deformedShapes = deformBrush(userPathPoints, brush, options);
+  const deformedShapes = deformBrush(userPathPoints, brush, options?.strokeWidth);
 
   let pathString = '';
   for (let i = 0; i < deformedShapes.length; i++) {
