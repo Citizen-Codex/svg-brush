@@ -42,6 +42,7 @@
     "@sveltejs/vite-plugin-svelte": "^6.0.0",
     "@tailwindcss/vite": "^4.1.13",
     "@types/svg-path-parser": "^1.1.6",
+    "d3": "^7.9.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-svelte": "^3.0.0",
@@ -66,7 +67,7 @@
   },
   "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748",
   "dependencies": {
-    "svg-path-parser": "1.1.0",
-    "simplify-js": "1.2.4"
+    "simplify-js": "1.2.4",
+    "svg-path-parser": "1.1.0"
   }
 }
