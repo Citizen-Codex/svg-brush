@@ -22,7 +22,7 @@ pnpm i svg-brush
 ```
 then its as simple as
 ```
-import { createBrushStroke } from 'svg-draw'
+import { createBrushStroke } from 'svg-brush'
 
 const points = [{x: 0, y: 0}, {x: 20, y: 20}]
 
