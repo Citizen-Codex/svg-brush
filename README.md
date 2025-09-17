@@ -1,21 +1,40 @@
-# SVG Brush Drawing Library
+# SVG Brush
 
-A TypeScript library for creating interactive SVG drawing applications with advanced **backbone deformation** brush techniques. Built as a SvelteKit package, this library provides mathematical utilities and Svelte components for implementing sophisticated brush-based drawing systems.
+A dead simple utility for creating vector based brush strokes in the browser. This package is the answer to an innocent little task: you have a brush stroke template that you want to morph into an arbitrary path. While the task description is small, the applications are vast. 
 
-### Package Structure
+For ease of use, we have preloaded the library with all the default brushes that come with [Figma Draw](https://www.figma.com/draw/) but by all means BYOB. If you wanna experiement, here's a [playground](https://svg-brush-pink.vercel.app/) for ya.
 
+Use it in dynamic data-viz
+
+<img  height="300" alt="image" src="https://github.com/user-attachments/assets/862ef240-fe27-4e45-9783-9f90cf1bef49" />
+
+or use it to make diagrams
+
+<img height="450" alt="image" src="https://github.com/user-attachments/assets/574a17ef-9369-471a-ba7b-8165c03f57f9" />
+
+or something else entirely!
+
+## Usage
+
+To install, do one of these or equivalent
 ```
-src/
-├── lib/
-│   ├── index.ts              # Main exports
-│   ├── PathMath.ts           # SVG path mathematics
-│   ├── BrushGeometry.ts      # Brush definitions
-│   ├── BackboneDeformation.ts # Deformation algorithms
-│   └── FigmaBrushes.ts       # Figma brush definitions
-├── components/               # Components for the demo page
-│   ├── DrawingApp.svelte     # Complete drawing app
-│   ├── SvgCanvas.svelte      # Drawing canvas
-│   └── BrushSelector.svelte  # Brush selection UI
-└── routes/
-    └── +page.svelte          # Demo page
+pnpm i svg-brush
 ```
+then its as simple as
+```
+import { createBrushStroke } from 'svg-draw'
+
+const points = [{x: 0, y: 0}, {x: 20, y: 20}]
+
+const path = createBrushStroke(points)
+
+const pathWithOptions = createBrushStroke(
+    points,
+    {
+        brush: 'Figma Blockbuster'
+        strokeWidth: 1,
+        simplificationTolerance: 0.3
+    }
+)
+```
+Of course there's more to the story too. You can define custom brushes, use utilities for conversion between paths and point sets and access types. A lot of this api is likely to change in the future, so if you're interested, you're encouraged to look through the `lib` folder.
