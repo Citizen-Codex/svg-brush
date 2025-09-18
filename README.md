@@ -20,20 +20,35 @@ To install, do one of these or equivalent
 ```
 pnpm i svg-brush
 ```
-then its as simple as
+then use an array of points or an existing path string like this
 ```
 import { createBrushStroke } from 'svg-brush'
 
 const points = [{x: 0, y: 0}, {x: 20, y: 20}]
 
-const path = createBrushStroke(points)
+const brushPathForPoints = createBrushStroke(points)
 
-const pathWithOptions = createBrushStroke(
+const brushPathForPointsWithOptions = createBrushStroke(
     points,
     {
         brush: 'Figma Blockbuster'
         strokeWidth: 1,
-        simplificationTolerance: 0.3
+        simplificationTolerance: 0.3,
+        brushAugmentation: false 
+    }
+)
+
+const path = 'M0,0 L20,20 Z'
+
+const brushPathForPath = createBrushStroke(path)
+
+const brushPathForPathWithOptions = createBrushStroke(
+    path,
+    {
+        brush: 'Figma Blockbuster'
+        strokeWidth: 1,
+        simplificationTolerance: 0.3,
+        brushAugmentation: false 
     }
 )
 ```

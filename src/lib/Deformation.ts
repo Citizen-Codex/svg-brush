@@ -25,6 +25,13 @@ export interface DeformationOptions {
    * Higher values result in more simplified paths.
    */
   simplificationTolerance?: number;
+
+  /**
+   * Set to true to add points at user defined locations for the brush stroke.
+   * This creates more precise strokes at sharp corners, but can result in
+   * a large performance penalty. Only use this option if you need to.
+   */
+  brushAugmentation?: boolean;
 }
 
 export interface ProjectionResult {
@@ -228,7 +235,6 @@ function interpolatePoint(prev: Point, curr: Point, prevParam: number, currParam
 
 function augmentBrushShape(outline: BrushShape[], userPathPoints: Point[]): BrushShape[] {
   const userParameters = computeUserParameters(userPathPoints);
-  console.log(userParameters);
   if (userParameters.length <= 1) {
     return outline
   }
@@ -299,10 +305,12 @@ export function deformBrush(
   userPathPoints: Point[],
   brush: Brush,
   thickness: number = 1,
+  brushAugmentation: boolean = false
 ): Point[][] {
   if (userPathPoints.length < 2) return [];
   const deformedShapes: Point[][] = [];
-  const brushShape = augmentBrushShape(brush.outline, userPathPoints);
+
+  const brushShape = brushAugmentation ? augmentBrushShape(brush.outline, userPathPoints) : brush.outline;
 
   for (const shape of brushShape) {
     const deformedPoints: Point[] = [];
@@ -361,13 +369,18 @@ export function createBrushStroke(
     brush = getBrush('Figma Blockbuster');
   }
 
-  const deformedShapes = deformBrush(points, brush, options?.strokeWidth);
+  const deformedShapes = deformBrush(points, brush, options?.strokeWidth, options?.brushAugmentation);
 
   let pathString = '';
   for (let i = 0; i < deformedShapes.length; i++) {
     const shapePoints = deformedShapes[i];
-    pathString += pointsToPath(shapePoints, options?.simplificationTolerance);
-    // pathString += pointsToSmoothPath(shapePoints, options?.simplificationTolerance);
+
+    if (options?.brushAugmentation) {
+      pathString += pointsToPath(shapePoints, options?.simplificationTolerance);
+    } else {
+      pathString += pointsToSmoothPath(shapePoints, options?.simplificationTolerance);
+    }
+
     if (brush.outline[i].closed) {
       pathString += ' Z';
     }

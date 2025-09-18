@@ -52,14 +52,17 @@
 	</g>
 
 	<g>
-		<path
-			d={createBrushStroke(lineD, {
-				brush: 'Figma Epic',
-				strokeWidth: 1,
-				simplificationTolerance: 0.3
-			})}
-			fill="black"
-		/>
+		{#if lineD}
+			<path
+				d={createBrushStroke(lineD, {
+					brush: 'Figma Epic',
+					strokeWidth: 1,
+					simplificationTolerance: 0.3,
+					brushAugmentation: true
+				})}
+				fill="black"
+			/>
+		{/if}
 		<path d={lineD} fill="none" stroke="black" stroke-width="1" />
 	</g>
 </svg>
